@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from typing import Protocol
 
-from openai import OpenAI
+from ollama import Client
 
 
 SYSTEM_PROMPT = """Eres JARVIS, un asistente personal de IA.
@@ -18,9 +18,9 @@ class LLMProvider(Protocol):
         ...
 
 
-class OpenAIResponsesLLM:
-    def __init__(self, api_key: str, model: str) -> None:
-        self.client = OpenAI(api_key=api_key)
+class OllamaLLM:
+    def __init__(self, host: str, model: str) -> None:
+        self.client = Client(host=host)
         self.model = model
 
     def respond(self, user_text: str) -> str:
@@ -29,19 +29,22 @@ class OpenAIResponsesLLM:
 
         started = time.perf_counter()
         try:
-            response = self.client.responses.create(
+            response = self.client.chat(
                 model=self.model,
-                instructions=SYSTEM_PROMPT,
-                input=user_text,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_text},
+                ],
             )
-            text = response.output_text.strip()
+            text = response.message.content.strip()
         except Exception as exc:
             raise RuntimeError(
-                "Falló el LLM. Revisa la API key, el modelo y la conexión."
+                f"Falló Ollama con el modelo '{self.model}'. "
+                "Comprueba que Ollama esté instalado, ejecutándose y que el modelo exista."
             ) from exc
 
         if not text:
-            raise RuntimeError("El LLM devolvió una respuesta vacía.")
+            raise RuntimeError("Ollama devolvió una respuesta vacía.")
 
-        print(f"🧠 LLM ({time.perf_counter() - started:.2f}s)")
+        print(f"🧠 LLM local/Ollama ({time.perf_counter() - started:.2f}s)")
         return text
