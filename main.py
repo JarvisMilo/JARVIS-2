@@ -52,7 +52,7 @@ def main() -> None:
         try:
             cycle_started = time.perf_counter()
 
-            set_state(State.READY)
+            set_state(State.LISTENING)
             audio = recorder.record_push_to_talk(config.max_record_seconds)
             if audio is None:
                 print("JARVIS apagado.")
