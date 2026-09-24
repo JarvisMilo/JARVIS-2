@@ -2,8 +2,9 @@
 
 Construcción incremental de un asistente personal de IA siguiendo **VISION CERO · Construye tu propio JARVIS**.
 
-## Regla
-Cada nivel debe funcionar antes de montar el siguiente.
+## Regla de construcción
+
+Cada nivel debe funcionar antes de montar el siguiente:
 
 1. Voz
 2. Tools
@@ -12,59 +13,105 @@ Cada nivel debe funcionar antes de montar el siguiente.
 5. Agentes
 6. Sistema operativo personal
 
-### Estado actual
-**Nivel 1 — Voz:** arquitectura y pipeline inicial.
+**Estado actual: Nivel 1 — Voz.**
 
-Flujo:
+No se añaden Tools, memoria, visión, agentes, event bus ni HUD gráfico antes de validar esta capa.
 
-`micrófono → STT → LLM → TTS → altavoz`
+## Nivel 1 — Voz
 
-Primero usamos push-to-talk. Wake word, tools, memoria, visión y agentes quedan fuera del Nivel 1.
+Pipeline:
 
-## Arquitectura
+`micrófono → VAD/STT → LLM → TTS → altavoz`
+
+Implementación:
+
+- Audio: Python + sounddevice.
+- Push-to-talk: mantener ESPACIO pulsado; soltarlo termina la captura.
+- STT: Faster-Whisper local con VAD del proveedor.
+- LLM: OpenAI Responses API, aislado detrás de un Protocol de proveedor.
+- TTS: Piper local, aislado detrás de un Protocol de proveedor.
+- Estados: LISTO → ESCUCHANDO → TRANSCRIBIENDO → PENSANDO → HABLANDO → LISTO.
+- Logs: latencia por etapa y ciclo completo.
+- Errores: una etapa fallida no destruye el bucle principal.
+- Proveedores: STT, LLM y TTS pueden sustituirse sin reescribir el orquestador.
+
+El PDF propone Faster-Whisper o whisper.cpp para STT, Piper o Qwen3-TTS para TTS y Silero VAD o el VAD del proveedor. Esta implementación usa Faster-Whisper + su VAD integrado y Piper.
+
+## Estructura del Nivel 1
 
 ```
-jarvis/
-├── app.py
+JARVIS-2/
+├── main.py
 ├── config.py
-├── audio/
-│   ├── __init__.py
-│   ├── stt.py
-│   ├── tts.py
-│   └── audio.py
-├── brain/
-│   ├── __init__.py
-│   └── llm.py
-└── tests/
-    └── test_imports.py
+├── audio.py
+├── stt.py
+├── llm.py
+├── tts.py
+├── tests/
+│   ├── test_imports.py
+│   └── test_config.py
+├── requirements.txt
+├── run.ps1
+└── .env.example
 ```
 
-## Windows
+Esta estructura sigue el arranque que indica el PDF: `main.py / stt.py / llm.py / tts.py / audio.py / config.py`.
 
-Crear entorno:
+## Windows / PowerShell
+
+1. Abre PowerShell dentro de la carpeta del repositorio.
+2. Ejecuta:
 
 ```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+.\run.ps1
 ```
 
-Configurar variables:
+El script crea/activa `.venv`, instala dependencias y arranca `main.py`.
 
-```powershell
-$env:OPENAI_API_KEY="TU_API_KEY"
-```
+También puedes crear `.env` desde `.env.example`; JARVIS lo carga automáticamente.
 
-También se puede crear `.env` a partir de `.env.example`; JARVIS carga ese archivo al iniciar.
+### Primer arranque
 
-Ejecutar:
+- Faster-Whisper puede descargar el modelo STT la primera vez.
+- Piper descarga la voz configurada la primera vez.
+- Necesitas Internet para esas descargas y para el LLM.
+- El micrófono y los altavoces deben estar disponibles para Windows.
 
-```powershell
-python app.py
-```
+### Uso
 
-El programa usa una interacción de consola deliberadamente simple: pulsar **Enter** inicia una captura de duración fija y la procesa de extremo a extremo.
+- Pulsa Enter en `JARVIS >`.
+- Mantén presionada **ESPACIO** mientras hablas.
+- Suelta **ESPACIO** para enviar.
+- JARVIS transcribe, piensa y responde por voz.
+- Escribe `salir` para terminar.
+- Ctrl+C detiene el proceso.
 
-> El Nivel 1 no ejecuta comandos del sistema ni código arbitrario. Eso pertenece a Tools y tendrá una capa explícita de permisos.
->
-> **UI/HUD:** no se añade todavía una interfaz gráfica. En esta etapa la consola es la superficie de control; el PDF reserva la evolución hacia un sistema con superficies UI para las capas posteriores.
+## Lo que todavía NO se implementa
+
+- Wake word / openWakeWord.
+- Tools / function calling.
+- Memoria / SQLite / Qdrant.
+- Cámara / visión.
+- Agentes / LangGraph.
+- Event bus.
+- UI/HUD gráfica.
+- Arquitectura de Personal AI OS.
+
+Se incorporará únicamente después de validar Nivel 1.
+
+## Seguridad
+
+- No se almacenan API keys en el repositorio.
+- `.env` está ignorado por Git.
+- En Nivel 1 no existen tools ni ejecución arbitraria.
+- No existe todavía una base de datos expuesta a red.
+
+## Criterio para pasar a Nivel 2
+
+Antes de continuar, Nivel 1 debe:
+
+- funcionar sin trucos manuales;
+- permitir medir latencia y fallos;
+- tener proveedores intercambiables;
+- tener una forma clara de detener el sistema;
+- completar una conversación de extremo a extremo.
