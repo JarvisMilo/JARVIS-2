@@ -1,0 +1,7 @@
+openai
+faster-whisper
+sounddevice
+numpy
+pyttsx3
+pytest
+python-dotenv
