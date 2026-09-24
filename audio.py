@@ -11,7 +11,7 @@ from pynput import keyboard
 
 
 class AudioProvider(Protocol):
-    def record_push_to_talk(self, max_seconds: int) -> np.ndarray:
+    def record_push_to_talk(self, max_seconds: int) -> np.ndarray | None:
         ...
 
 
@@ -26,33 +26,43 @@ class AudioRecorder:
         if self.channels <= 0:
             raise ValueError("channels debe ser mayor que 0.")
 
-    def record_push_to_talk(self, max_seconds: int) -> np.ndarray:
+    def record_push_to_talk(self, max_seconds: int) -> np.ndarray | None:
         if max_seconds <= 0:
             raise ValueError("max_seconds debe ser mayor que 0.")
 
         pressed = Event()
         released = Event()
+        quit_requested = Event()
         lock = Lock()
         chunks: list[np.ndarray] = []
         frames_limit = int(max_seconds * self.sample_rate)
         captured_frames = 0
         started = time.perf_counter()
 
-        def on_press(key: keyboard.Key | keyboard.KeyCode) -> None:
+        def on_press(key):
             if key == keyboard.Key.space:
                 with lock:
                     if not pressed.is_set():
                         pressed.set()
+            elif key == keyboard.Key.esc:
+                quit_requested.set()
+                released.set()
+                pressed.set()
 
-        def on_release(key: keyboard.Key | keyboard.KeyCode) -> None:
+        def on_release(key):
             if key == keyboard.Key.space:
                 released.set()
 
-        print("🎙️ Mantén presionada la BARRA ESPACIADORA para hablar.")
+        print("🎙️ Mantén ESPACIO para hablar · ESC para apagar")
 
         try:
             with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
                 pressed.wait()
+
+                if quit_requested.is_set():
+                    listener.stop()
+                    return None
+
                 print("▶ Estado: ESCUCHANDO")
 
                 def callback(indata, frames, _time, status) -> None:
