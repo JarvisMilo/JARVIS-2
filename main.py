@@ -46,24 +46,21 @@ def main() -> None:
     print("\n=== JARVIS 2 · NIVEL 1 · VOZ ===")
     print("Estado: LISTO")
     print("Mantén ESPACIO para hablar. Suelta ESPACIO para enviar.")
-    print("Escribe 'salir' y pulsa Enter para apagar. Ctrl+C también detiene JARVIS.\n")
+    print("Pulsa ESC para apagar. Ctrl+C también detiene JARVIS.\n")
 
     while True:
         try:
-            command = input("JARVIS > ")
-            if command.strip().lower() in {"salir", "exit", "quit"}:
-                print("JARVIS apagado.")
-                break
-
             cycle_started = time.perf_counter()
 
-            set_state(State.LISTENING)
+            set_state(State.READY)
             audio = recorder.record_push_to_talk(config.max_record_seconds)
+            if audio is None:
+                print("JARVIS apagado.")
+                break
 
             set_state(State.TRANSCRIBING)
             user_text = stt.transcribe(audio)
             if not user_text:
-                set_state(State.READY)
                 print("⚠️ No detecté voz. Intenta de nuevo.\n")
                 continue
 
