@@ -6,7 +6,11 @@ from brain.llm import Brain
 
 
 def main() -> None:
+    print("🔎 Comprobando configuración...")
     config = Config.from_env()
+    print(f"✓ Modelo LLM: {config.llm_model}")
+    print(f"✓ STT local: faster-whisper/{config.stt_model}")
+    print(f"✓ Audio: {config.sample_rate} Hz, {config.channels} canal(es)")
 
     recorder = AudioRecorder(
         sample_rate=config.sample_rate,
