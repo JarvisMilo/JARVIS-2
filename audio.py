@@ -90,6 +90,9 @@ class AudioRecorder:
                             break
 
                 listener.stop()
+
+                if quit_requested.is_set():
+                    return None
         except Exception as exc:
             raise RuntimeError(
                 "No se pudo capturar el micrófono. Revisa el dispositivo de entrada, "
