@@ -26,8 +26,8 @@ def _non_empty(name: str, default: str) -> str:
 
 @dataclass(frozen=True)
 class Config:
-    openai_api_key: str
-    llm_model: str = "gpt-5.6"
+    llm_model: str = "llama3.2"
+    ollama_host: str = "http://127.0.0.1:11434"
     stt_model: str = "base"
     tts_voice: str = "es_MX-ald-medium"
     voices_dir: str = "voices"
@@ -37,15 +37,9 @@ class Config:
 
     @classmethod
     def from_env(cls) -> "Config":
-        key = os.getenv("OPENAI_API_KEY", "").strip()
-        if not key:
-            raise RuntimeError(
-                "Falta OPENAI_API_KEY. Configúrala en PowerShell o en un archivo .env."
-            )
-
         return cls(
-            openai_api_key=key,
-            llm_model=_non_empty("JARVIS_LLM_MODEL", "gpt-5.6"),
+            llm_model=_non_empty("JARVIS_LLM_MODEL", "llama3.2"),
+            ollama_host=_non_empty("OLLAMA_HOST", "http://127.0.0.1:11434").rstrip("/"),
             stt_model=_non_empty("JARVIS_STT_MODEL", "base"),
             tts_voice=_non_empty("JARVIS_TTS_VOICE", "es_MX-ald-medium"),
             voices_dir=_non_empty("JARVIS_VOICES_DIR", "voices"),
