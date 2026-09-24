@@ -5,7 +5,7 @@ from enum import Enum
 
 from audio import AudioRecorder
 from config import Config
-from llm import OpenAIResponsesLLM
+from llm import OllamaLLM
 from stt import FasterWhisperSTT
 from tts import PiperTTS
 
@@ -28,7 +28,8 @@ def main() -> None:
 
     try:
         config = Config.from_env()
-        print(f"✓ Modelo LLM: {config.llm_model}")
+        print(f"✓ Modelo LLM local: Ollama/{config.llm_model}")
+        print(f"✓ Ollama: {config.ollama_host}")
         print(f"✓ STT local: faster-whisper/{config.stt_model}")
         print(f"✓ TTS local: Piper/{config.tts_voice}")
         print(f"✓ Audio: {config.sample_rate} Hz, {config.channels} canal(es)")
@@ -36,7 +37,7 @@ def main() -> None:
 
         recorder = AudioRecorder(config.sample_rate, config.channels)
         stt = FasterWhisperSTT(config.stt_model)
-        brain = OpenAIResponsesLLM(config.openai_api_key, config.llm_model)
+        brain = OllamaLLM(config.ollama_host, config.llm_model)
         tts = PiperTTS(config.tts_voice, config.voices_dir)
     except Exception as exc:
         print(f"❌ Error de inicialización: {exc}")
