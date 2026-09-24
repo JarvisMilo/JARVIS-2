@@ -1,7 +1,8 @@
 openai
 faster-whisper
+piper-tts
 sounddevice
 numpy
-pyttsx3
+pynput
 pytest
 python-dotenv
