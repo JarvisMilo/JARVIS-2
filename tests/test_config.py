@@ -35,3 +35,19 @@ def test_config_rejects_empty_model(monkeypatch):
 
     with pytest.raises(RuntimeError):
         Config.from_env()
+
+
+def test_config_rejects_invalid_channels(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("JARVIS_CHANNELS", "0")
+
+    with pytest.raises(RuntimeError):
+        Config.from_env()
+
+
+def test_config_rejects_invalid_max_record_seconds(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("JARVIS_MAX_RECORD_SECONDS", "-1")
+
+    with pytest.raises(RuntimeError):
+        Config.from_env()
