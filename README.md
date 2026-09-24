@@ -21,14 +21,14 @@ No se añaden Tools, memoria, visión, agentes, event bus ni HUD gráfico antes 
 
 Pipeline:
 
-`micrófono → VAD/STT → LLM → TTS → altavoz`
+`micrófono → VAD/STT → LLM local → TTS → altavoz`
 
 Implementación:
 
 - Audio: Python + sounddevice.
 - Push-to-talk: mantener ESPACIO pulsado; soltarlo termina la captura.
 - STT: Faster-Whisper local con VAD del proveedor.
-- LLM: OpenAI Responses API, aislado detrás de un Protocol de proveedor.
+- LLM: **Ollama local**, aislado detrás de un Protocol de proveedor.
 - TTS: Piper local, aislado detrás de un Protocol de proveedor.
 - Estados: LISTO → ESCUCHANDO → TRANSCRIBIENDO → PENSANDO → HABLANDO → LISTO.
 - Logs: latencia por etapa y ciclo completo.
@@ -36,6 +36,18 @@ Implementación:
 - Proveedores: STT, LLM y TTS pueden sustituirse sin reescribir el orquestador.
 
 El PDF propone Faster-Whisper o whisper.cpp para STT, Piper o Qwen3-TTS para TTS y Silero VAD o el VAD del proveedor. Esta implementación usa Faster-Whisper + su VAD integrado y Piper.
+
+## Sin tokens de OpenAI
+
+El cerebro del Nivel 1 funciona localmente con Ollama. **No se necesita una API key de OpenAI ni pagar tokens para ejecutar JARVIS.**
+
+Ollama ejecuta el modelo en tu propio PC y expone una API local. El proyecto usa esa API mediante la librería Python `ollama`.
+
+Modelo inicial:
+
+`llama3.2`
+
+Ollama ofrece variantes pequeñas y modelos de distintos tamaños; si tu PC tiene pocos recursos, podremos cambiar el modelo después sin cambiar el orquestador.
 
 ## Estructura del Nivel 1
 
@@ -57,35 +69,46 @@ JARVIS-2/
 
 Esta estructura sigue el arranque que indica el PDF: `main.py / stt.py / llm.py / tts.py / audio.py / config.py`.
 
-## Windows / PowerShell
+## Windows
 
-1. Abre PowerShell dentro de la carpeta del repositorio.
-2. Ejecuta:
+1. Instala Ollama para Windows.
+2. Abre Ollama y comprueba que esté ejecutándose.
+3. En una terminal ejecuta:
+
+```powershell
+ollama pull llama3.2
+```
+
+4. Comprueba que aparece:
+
+```powershell
+ollama list
+```
+
+5. Desde la carpeta de JARVIS ejecuta:
 
 ```powershell
 .\run.ps1
 ```
 
-El script crea/activa `.venv`, instala dependencias y arranca `main.py`.
-
-También puedes crear `.env` desde `.env.example`; JARVIS lo carga automáticamente.
+El script crea/activa `.venv`, instala las dependencias y comprueba que el modelo local esté disponible.
 
 ### Primer arranque
 
 - Faster-Whisper puede descargar el modelo STT la primera vez.
 - Piper descarga la voz configurada la primera vez.
-- Necesitas Internet para esas descargas y para el LLM.
+- Ollama necesita descargar el modelo una sola vez.
+- Las descargas iniciales necesitan Internet, pero las conversaciones posteriores pueden ejecutarse localmente.
 - El micrófono y los altavoces deben estar disponibles para Windows.
 
-### Uso
+## Uso
 
 - JARVIS queda en estado **LISTO** y espera una acción.
 - Mantén presionada **ESPACIO** mientras hablas.
 - Suelta **ESPACIO** para enviar.
-- JARVIS transcribe, piensa y responde por voz.
+- JARVIS transcribe, piensa con Ollama y responde por voz.
 - Pulsa **ESC** para apagar.
 - Ctrl+C también detiene el proceso.
-- Si mantienes ESPACIO durante el máximo configurado, JARVIS espera a que lo sueltes antes de aceptar la siguiente captura.
 
 ## Lo que todavía NO se implementa
 
@@ -102,9 +125,8 @@ Se incorporará únicamente después de validar Nivel 1.
 
 ## Seguridad
 
-- No se almacenan API keys en el repositorio.
-- `.env` está ignorado por Git.
-- En Nivel 1 no existen tools ni ejecución arbitraria.
+- No se almacenan API keys porque el Nivel 1 usa Ollama local.
+- No existen tools ni ejecución arbitraria.
 - No existe todavía una base de datos expuesta a red.
 
 ## Criterio para pasar a Nivel 2
