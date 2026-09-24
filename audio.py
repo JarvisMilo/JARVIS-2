@@ -65,13 +65,12 @@ class AudioRecorder:
 
                 print("▶ Estado: ESCUCHANDO")
 
-                def callback(indata, frames, _time, status) -> None:
+                def callback(indata, _frames, _time, status) -> None:
                     nonlocal captured_frames
                     if status:
                         print(f"⚠️ Audio: {status}", flush=True)
                     remaining = frames_limit - captured_frames
                     if remaining <= 0:
-                        released.set()
                         return
                     data = indata[:remaining].copy()
                     chunks.append(data.reshape(-1))
@@ -86,7 +85,9 @@ class AudioRecorder:
                 ):
                     while not released.wait(0.05):
                         if captured_frames >= frames_limit:
-                            released.set()
+                            print("⏱️ Límite de captura alcanzado; suelta ESPACIO.")
+                            released.wait()
+                            break
 
                 listener.stop()
         except Exception as exc:
