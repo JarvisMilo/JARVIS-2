@@ -1,4 +1,5 @@
 import time
+
 from openai import OpenAI
 
 
@@ -16,12 +17,24 @@ class Brain:
         self.model = model
 
     def respond(self, user_text: str) -> str:
+        if not user_text.strip():
+            raise ValueError("No se puede enviar una entrada vacía al LLM.")
+
         started = time.perf_counter()
-        response = self.client.responses.create(
-            model=self.model,
-            instructions=SYSTEM_PROMPT,
-            input=user_text,
-        )
-        text = response.output_text.strip()
+        try:
+            response = self.client.responses.create(
+                model=self.model,
+                instructions=SYSTEM_PROMPT,
+                input=user_text,
+            )
+            text = response.output_text.strip()
+        except Exception as exc:
+            raise RuntimeError(
+                "Falló la respuesta del LLM. Revisa la API key, el modelo y la conexión."
+            ) from exc
+
+        if not text:
+            raise RuntimeError("El LLM devolvió una respuesta vacía.")
+
         print(f"🧠 LLM ({time.perf_counter() - started:.2f}s)")
         return text
