@@ -79,12 +79,13 @@ También puedes crear `.env` desde `.env.example`; JARVIS lo carga automáticame
 
 ### Uso
 
-- Pulsa Enter en `JARVIS >`.
+- JARVIS queda en estado **LISTO** y espera una acción.
 - Mantén presionada **ESPACIO** mientras hablas.
 - Suelta **ESPACIO** para enviar.
 - JARVIS transcribe, piensa y responde por voz.
-- Escribe `salir` para terminar.
-- Ctrl+C detiene el proceso.
+- Pulsa **ESC** para apagar.
+- Ctrl+C también detiene el proceso.
+- Si mantienes ESPACIO durante el máximo configurado, JARVIS espera a que lo sueltes antes de aceptar la siguiente captura.
 
 ## Lo que todavía NO se implementa
 
@@ -114,4 +115,6 @@ Antes de continuar, Nivel 1 debe:
 - permitir medir latencia y fallos;
 - tener proveedores intercambiables;
 - tener una forma clara de detener el sistema;
-- completar una conversación de extremo a extremo.
+- completar una conversación de extremo a extremo;
+- mantener el bucle estable después de un error;
+- no quedar bloqueado si se alcanza el límite de captura.
