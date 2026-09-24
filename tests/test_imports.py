@@ -24,10 +24,10 @@ def test_audio_recorder_rejects_invalid_channels():
 
 
 def test_llm_rejects_empty_input():
-    from llm import OpenAIResponsesLLM
+    from llm import OllamaLLM
     import pytest
 
-    llm = OpenAIResponsesLLM.__new__(OpenAIResponsesLLM)
+    llm = OllamaLLM.__new__(OllamaLLM)
 
     with pytest.raises(ValueError):
         llm.respond("   ")
